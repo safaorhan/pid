@@ -59,6 +59,7 @@ body {
 .slide p, .slide li { font-size: 26px; line-height: 1.4; }
 .slide p { margin: 0 0 14px; }
 .muted { color: var(--muted); }
+.slide p.repo { font: 600 26px/1.2 var(--mono); color: var(--teal); }
 .lead { font-size: 30px !important; color: var(--text); }
 em.hl { font-style: normal; color: var(--amber); }
 .p { color: var(--p); } .i { color: var(--i); } .d { color: var(--d); }
@@ -245,6 +246,7 @@ body.editing svg text[data-eid]:hover { fill: var(--amber); }
   box-shadow: 0 6px 24px rgba(0, 0, 0, .4);
 }
 #editbar .msg { font-weight: 700; }
+#editbar[hidden] { display: none; }
 .inline-edit {
   position: fixed; z-index: 30;
   font: 600 16px var(--sans); color: var(--text);

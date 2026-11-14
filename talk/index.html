@@ -22,8 +22,7 @@
     </div>
   </div>
   <aside class="notes">
-    <p>Robot masada, kapalı. Sağdaki simülasyon onun dijital ikizi; tıklayınca dürtülüyor.</p>
-    <p>"Birkaç ay önce LEGO'dan kendi kendine dengede duran bir robot yaptım. Bu 20 dakikada nasıl ayakta durduğunu adım adım göstereceğim."</p>
+    <p>Add speaker notes...</p>
   </aside>
 </section>
 
@@ -42,8 +41,7 @@
     <p style="color:var(--text)">Gözler? Ultrasonik sensör. Hiçbir şey yapmıyor, sadece empati kurmamıza yardımcı oluyor :)</p>
   </div>
   <aside class="notes">
-    <p>Robotu eline al, parçaları göster: hub, iki motor, tekerlekler, "gözler".</p>
-    <p>Pybricks: tarayıcıdan (code.pybricks.com) Bluetooth ile kod yüklüyorsun.</p>
+    <p>Add speaker notes...</p>
   </aside>
 </section>
 
@@ -72,8 +70,7 @@
     </div>
   </div>
   <aside class="notes">
-    <p>Robotu aç ama kodu çalıştırma: bırak, düşsün. "İşte problem."</p>
-    <p>Simülasyonda "Kontrol yok" ile düşüşü, "Kontrol var" ile tekerleklerin altına gidişini göster.</p>
+    <p>Add speaker notes...</p>
   </aside>
 </section>
 
@@ -128,8 +125,7 @@
   </svg>
   <p class="frag" style="text-align:center;margin-top:auto"><b class="teal">hata</b> = hedef − ölçüm</p>
   <aside class="notes">
-    <p>Termostat, araba hız sabitleyici, drone; hepsi bu döngü.</p>
-    <p>Robotta: hedef 90° (dik), ölçüm IMU'dan gelen eğim, çıktı motor gücü.</p>
+    <p>Add speaker notes...</p>
   </aside>
 </section>
 
@@ -147,7 +143,7 @@
   </div>
   <p class="muted mt-auto" style="text-align:center">Kp, Ki, Kd: Başımızın belası üç sabit 🤓</p>
   <aside class="notes">
-    <p>Her karttan sonra bir benzetme: P = yay, I = inatçı, D = amortisör.</p>
+    <p>Add speaker notes...</p>
   </aside>
 </section>
 
@@ -193,8 +189,7 @@
     </div>
   </div>
   <aside class="notes">
-    <p>"dt'yi StopWatch ile ölçüyorum, çünkü döngü her seferinde aynı sürede dönmüyor."</p>
-    <p>Integral sınırı: max_output / Ki. I terimi tek başına motorun %100'ünü geçemez.</p>
+    <p>Add speaker notes...</p>
   </aside>
 </section>
 
@@ -237,9 +232,7 @@
     </div>
   </div>
   <aside class="notes">
-    <p>Sırayla: Sadece P → P + D → P + I + D. "itme" çubuğundaki yerçekimi çizgisine dikkat çek.</p>
-    <p>Sonra seyirciye sor: "Kp'yi ne yapalım?" Gökyüzüne tıklayınca hedef değişir. Rüzgâr = ani dürtme.</p>
-    <p>Fazla I → aşma (windup). Fazla D → titreme yok ama tembel.</p>
+    <p>Add speaker notes...</p>
   </aside>
 </section>
 
@@ -256,7 +249,7 @@
   </div>
   <p class="muted mt-auto">Her adım ayrı bir dosya: <span class="chip">checkpoints/step1_p.py</span> … <span class="chip">step5_xbox.py</span></p>
   <aside class="notes">
-    <p>Pybricks'te 5 dosya önceden açık olsun; her adımda sadece "çalıştır".</p>
+    <p>Add speaker notes...</p>
   </aside>
 </section>
 
@@ -300,9 +293,7 @@ while True:
     </div>
   </div>
   <aside class="notes">
-    <p>Robotta step1_p.py'yi çalıştır. Elinle dik tut, bırak.</p>
-    <p>PROVA SONRASI: altyazıyı robotun gerçekte yaptığına göre güncelle (salınıyor mu? kaçıyor mu?).</p>
-    <p>Sol motor ters takılı, o yüzden -power.</p>
+    <p>Add speaker notes...</p>
   </aside>
 </section>
 
@@ -337,8 +328,7 @@ roll_pid = PID(22, 0, 0.22, 100)
     </div>
   </div>
   <aside class="notes">
-    <p>step2_pd.py. Simülasyonda (modelde) D'nin etkisi küçük; asıl fark robotta görünmeli.</p>
-    <p>PROVA SONRASI: altyazıyı güncelle.</p>
+    <p>Add speaker notes...</p>
   </aside>
 </section>
 
@@ -367,9 +357,7 @@ roll_pid = PID(22, 0, 0.22, 100)
     </div>
   </div>
   <aside class="notes">
-    <p>Kumandayı bir gönüllüye ver. Hub ekranı değiştirilen değeri gösteriyor (Kp, Kd×100, Ki/10); tam değerler Pybricks konsolunda.</p>
-    <p>"Ben de böyle ayarladım: her değişiklik için kodu yeniden yüklemek yerine düğmeler. İterasyon hızı her şey."</p>
-    <p>Dikkat: display.text() kayan yazı döngüyü bloklar. Bu yüzden display.number().</p>
+    <p>Add speaker notes...</p>
   </aside>
 </section>
 
@@ -393,7 +381,7 @@ roll_pid = PID(22, 0, 0.22, 100)
     </div>
   </div>
   <aside class="notes">
-    <p>Simülasyonda başlangıç bayrağına ve "konum"a dikkat çek. Robotta da aynı: masanın kenarına doğru gidiyor (yakala!).</p>
+    <p>Add speaker notes...</p>
   </aside>
 </section>
 
@@ -446,8 +434,7 @@ roll_pid = PID(22, 0, 0.22, 100)
   </svg>
   <p class="lead frag" style="text-align:center;margin-top:auto">Durmak için önce <em class="hl">geriye yaslanmak</em> gerekiyor.<br><span class="muted" style="font-size:24px">Geriye yaslanmak için de önce biraz daha hızlanmak.</span></p>
   <aside class="notes">
-    <p>Dış döngü motora dokunmuyor bile; sadece iç döngünün hedefini (eğimi) değiştiriyor.</p>
-    <p>Bisiklet benzetmesi: frenlemeden önce kilonu geriye verirsin.</p>
+    <p>Add speaker notes...</p>
   </aside>
 </section>
 
@@ -488,8 +475,7 @@ speed_pid = PID(0.006, 0.0014, 0.000005, 30)
     </div>
   </div>
   <aside class="notes">
-    <p>step4_cascade.py. Robotu it: geri gelip aynı yerde durmaya çalışıyor.</p>
-    <p>Simülasyonda dış döngüyü kapat/aç ve konuma bak.</p>
+    <p>Add speaker notes...</p>
   </aside>
 </section>
 
@@ -527,8 +513,7 @@ speed_pid = PID(0.006, 0.0014, 0.000005, 30)
     </div>
   </div>
   <aside class="notes">
-    <p>selfbalancing_final.py. Robotu sür: ileri, geri, dön. Bip!</p>
-    <p>İleri gitmek için önce geriye kaçıp sonra öne eğildiğini göster (dış döngü işte).</p>
+    <p>Add speaker notes...</p>
   </aside>
 </section>
 
@@ -544,13 +529,14 @@ speed_pid = PID(0.006, 0.0014, 0.000005, 30)
         <li><b>Sol çubuk</b><span>dön</span></li>
         <li><b>LT</b><span>bip</span></li>
       </ul>
+      <p class="repo" style="margin-top:36px">github.com/safaorhan/pid</p>
     </div>
     <div class="col" style="justify-content:center;width:460px">
       <div data-pad="ls,rs,lt:amber"></div>
     </div>
   </div>
   <aside class="notes">
-    <p>Kumandayı dolaştır. Masanın kenarına dikkat!</p>
+    <p>Add speaker notes...</p>
   </aside>
 </section>
 
