@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="tr"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PID | Robotlar Nasıl Ayakta Durur</title>
+<link rel="stylesheet" href="deck.css">
+</head>
+<body>
+<div id="viewport"><div id="stage">
+
+<!-- ============ 1. Kapak ============ -->
+<section class="slide">
+  <div class="row grow">
+    <div class="col grow" style="justify-content:center">
+      <div class="led" data-text="PID" data-scroll="" style="--size:150px;margin-bottom:40px"></div>
+      <h1 style="font-size:120px">PID</h1>
+      <h2 style="font-size:52px;color:var(--teal);margin-top:6px">Robotlar Nasıl Ayakta Durur?</h2>
+      <p class="muted" style="margin-top:36px;font-size:22px">Safa Orhan</p>
+    </div>
+    <div class="twin sim-box" data-mode="cascade" data-battery="0.75" style="width:440px">
+      <canvas></canvas>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Robot masada, kapalı. Sağdaki simülasyon onun dijital ikizi; tıklayınca dürtülüyor.</p>
+    <p>"Birkaç ay önce LEGO'dan kendi kendine dengede duran bir robot yaptım. Bu 20 dakikada nasıl ayakta durduğunu adım adım göstereceğim."</p>
+  </aside>
+</section>
+
+<!-- ============ 2. Robotla tanışın ============ -->
+<section class="slide">
+  <div class="kicker">KONU MANKENİMİZ: GARİP</div>
+  <h2>Robotumuzu tanıyalım: LEGO Robot Inventor</h2>
+  <div class="cards c2" style="margin-top:28px">
+    <div class="card"><h3>Hardware</h3><p>LEGO Robot Inventor hub (51515). İçinde 6 eksenli IMU var: eğimi ölçüyor.</p></div>
+    <div class="card"><h3>Setup</h3><p>2 × orta boy motor, A ve E portlarında. Her birine bir tekerler bağlı.</p></div>
+    <div class="card"><h3>Firmware</h3><p>LEGO'nun kendi firmware'i yerine <b class="teal">Pybricks</b>: hub'da MicroPython çalışıyor.&nbsp;</p></div>
+    <div class="card"><h3>Kod</h3><p>Bluetooth ile yükleniyor. Birazdan birlikte farklı farklı kodlar yüklemeyi deneyeceğiz.</p></div>
+  </div>
+  <div class="card mt-auto" style="display:flex;gap:18px;align-items:center">
+    <span class="chip">Port D</span>
+    <p style="color:var(--text)">Gözler? Ultrasonik sensör. Hiçbir şey yapmıyor, sadece empati kurmamıza yardımcı oluyor :)</p>
+  </div>
+  <aside class="notes">
+    <p>Robotu eline al, parçaları göster: hub, iki motor, tekerlekler, "gözler".</p>
+    <p>Pybricks: tarayıcıdan (code.pybricks.com) Bluetooth ile kod yüklüyorsun.</p>
+  </aside>
+</section>
+
+<!-- ============ 3. Problem ============ -->
+<section class="slide">
+  <div class="kicker">Problem: YER ÇEKİMİ</div>
+  <h2>Ters sarkaç (Inverse pendulum)</h2>
+  <div class="row grow" style="margin-top:20px">
+    <div class="col" style="width:470px">
+      <p class="lead">Elinizde oklava dengelemeyi hiç denediniz mi?</p>
+      <p class="frag">Oklava düşmeye başlayınca elinizi <em class="hl">düşüşün altına</em> götürürsünüz.</p>
+      <p class="frag">Robotun eli yok, tekerleği var. Düştüğü yöne doğru sürmek zorunda.</p>
+      <p class="frag muted">Soru şu: <b style="color:var(--text)">ne kadar hızlı?</b></p>
+    </div>
+    <div class="col grow" style="gap:12px">
+      <div class="twin sim-box grow" data-mode="none">
+        <canvas></canvas>
+      </div>
+      <div class="controls twin-controls">
+        <button class="btn" data-act="push-l">◀ dürt</button>
+        <button class="btn" data-act="push-r">dürt ▶</button>
+        <button class="btn" data-act="reset">yeniden</button>
+        <button class="btn on" data-set-mode="none" style="margin-left:auto">Kontrol yok</button>
+        <button class="btn" data-set-mode="cascade">Kontrol var</button>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Robotu aç ama kodu çalıştırma: bırak, düşsün. "İşte problem."</p>
+    <p>Simülasyonda "Kontrol yok" ile düşüşü, "Kontrol var" ile tekerleklerin altına gidişini göster.</p>
+  </aside>
+</section>
+
+<!-- ============ 4. Geri besleme ============ -->
+<section class="slide">
+  <div class="kicker">TEORİ</div>
+  <h2>Geri besleme döngüsü</h2>
+  <p class="muted">Saniyede ~100 kez: ölç, hedefle karşılaştır, düzelt.</p>
+  <svg viewBox="0 0 1136 420" style="margin-top:10px">
+    <defs>
+      <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="#8d9ca6"></path>
+      </marker>
+    </defs>
+    <g fill="none" stroke="#8d9ca6" stroke-width="3" marker-end="url(#arr)">
+      <path class="flow" d="M200 185 H258"></path>
+      <path class="flow" d="M318 185 H378"></path>
+      <path class="flow" d="M548 185 H628"></path>
+      <path class="flow" d="M798 185 H888"></path>
+      <path class="flow" d="M985 220 V330 H770"></path>
+      <path class="flow" d="M570 330 H288 V217"></path>
+      <path class="flow slow" d="M985 40 V146" stroke="#ffbf47"></path>
+    </g>
+    <g font-size="24" text-anchor="middle" fill="#e9eef1">
+      <rect x="40" y="150" width="160" height="70" rx="12" fill="#151b1f" stroke="#2a353d" stroke-width="2"></rect>
+      <text x="120" y="182">Hedef</text><text x="120" y="208" font-size="18" fill="#8d9ca6">90° (dik)</text>
+
+      <circle cx="288" cy="185" r="30" fill="#151b1f" stroke="#8d9ca6" stroke-width="3"></circle>
+      <text x="288" y="194" font-size="30">−</text>
+
+      <rect x="380" y="150" width="168" height="70" rx="12" fill="#151b1f" stroke="#1fb5b0" stroke-width="3"></rect>
+      <text x="464" y="196" font-size="32" font-weight="800"><tspan fill="#ff7a45">P</tspan><tspan fill="#3fc1f0">I</tspan><tspan fill="#b58cff">D</tspan></text>
+
+      <rect x="630" y="150" width="168" height="70" rx="12" fill="#151b1f" stroke="#2a353d" stroke-width="2"></rect>
+      <text x="714" y="182">Motorlar</text><text x="714" y="208" font-size="17" fill="#8d9ca6" font-family="ui-monospace,Menlo,monospace">dc(güç)</text>
+
+      <rect x="890" y="150" width="190" height="70" rx="12" fill="#151b1f" stroke="#2a353d" stroke-width="2"></rect>
+      <text x="985" y="182">Robot</text><text x="985" y="208" font-size="18" fill="#8d9ca6">fizik, yerçekimi</text>
+
+      <rect x="570" y="296" width="200" height="68" rx="12" fill="#151b1f" stroke="#2a353d" stroke-width="2"></rect>
+      <text x="670" y="326">IMU</text><text x="670" y="352" font-size="17" fill="#8d9ca6" font-family="ui-monospace,Menlo,monospace">tilt()</text>
+
+      <g font-size="18" fill="#8d9ca6">
+        <text x="348" y="168">hata</text>
+        <text x="588" y="168">güç</text>
+        <text x="843" y="168">dönüş</text>
+        <text x="880" y="318">eğim</text>
+        <text x="985" y="28" fill="#ffbf47">dürtme, yerçekimi</text>
+        <text x="278" y="300" text-anchor="end">ölçüm</text>
+      </g>
+    </g>
+  </svg>
+  <p class="frag" style="text-align:center;margin-top:auto"><b class="teal">hata</b> = hedef − ölçüm</p>
+  <aside class="notes">
+    <p>Termostat, araba hız sabitleyici, drone; hepsi bu döngü.</p>
+    <p>Robotta: hedef 90° (dik), ölçüm IMU'dan gelen eğim, çıktı motor gücü.</p>
+  </aside>
+</section>
+
+<!-- ============ 5. PID tek satırda ============ -->
+<section class="slide">
+  <div class="kicker">Formül</div>
+  <h2>PID tek satırda</h2>
+  <p style="font:600 40px/1.3 var(--mono);text-align:center;margin:30px 0 34px">
+    güç = <span class="p">Kp·e</span> + <span class="i">Ki·∫e dt</span> + <span class="d">Kd·de/dt</span>
+  </p>
+  <div class="cards c3">
+    <div class="card term p frag"><div class="big">P</div><h3>Şimdi (Proportional)</h3><p>Şu anda hedeften ne kadar uzaktayım? Ne yöne doğru gitmeliyim?</p></div>
+    <div class="card term i frag"><div class="big">I</div><h3>Geçmiş (Integral)</h3><p>Ne zamandır uzaktayım, ne kadar hata birikti?</p></div>
+    <div class="card term d frag"><div class="big">D</div><h3>Gelecek (Derivative)</h3><p>Hedefe ne hızla yaklaşıyorum? Hızlı geliyorsam fren yapmalıyım ki hedefi aşmayayım.</p></div>
+  </div>
+  <p class="muted mt-auto" style="text-align:center">Kp, Ki, Kd: Başımızın belası üç sabit 🤓</p>
+  <aside class="notes">
+    <p>Her karttan sonra bir benzetme: P = yay, I = inatçı, D = amortisör.</p>
+  </aside>
+</section>
+
+<!-- ============ 6. PID.py ============ -->
+<section class="slide">
+  <div class="kicker">PID.py</div>
+  <h2>Kod okumayı hatırlıyor muyuz 😅</h2>
+  <div class="row grow" style="margin-top:16px">
+    <div class="col" style="width:690px">
+<script type="text/x-python" data-start="19" data-class="tiny" data-new="7,10,18,23,26">
+    def compute(self, setpoint, measurement):
+        dt = self.timer.time() / 1000  # seconds
+        self.timer.reset()
+        error = setpoint - measurement
+
+        # Proportional
+        P = self.Kp * error
+
+        # Integral
+        self.integral += error * dt
+
+        if self.integral > self.integral_limit:
+            self.integral = self.integral_limit
+
+        if self.integral < -self.integral_limit:
+            self.integral = -self.integral_limit
+
+        I = self.Ki * self.integral
+
+        # Derivative
+        D = 0
+        if dt > 0:
+            D = self.Kd * (error - self.last_error) / dt
+
+        self.last_error = error
+        return P + I + D
+</script>
+    </div>
+    <div class="col grow" style="gap:18px;justify-content:center">
+      <div class="card"><h3 class="p">P</h3><p>Hata × sabit.</p></div>
+      <div class="card"><h3 class="i">I</h3><p>Hataları topla. Bir sınırla ki sonsuza şişmesin (<i>windup</i>).</p></div>
+      <div class="card"><h3 class="d">D</h3><p>Son turdan bu yana hata ne kadar değişti, bölü geçen süre.</p></div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>"dt'yi StopWatch ile ölçüyorum, çünkü döngü her seferinde aynı sürede dönmüyor."</p>
+    <p>Integral sınırı: max_output / Ki. I terimi tek başına motorun %100'ünü geçemez.</p>
+  </aside>
+</section>
+
+<!-- ============ 7. Oyun alanı ============ -->
+<section class="slide drone-sim">
+  <div class="kicker">Oyun alanı</div>
+  <h2>Drone'u hedefte tut</h2>
+  <div class="row grow" style="margin-top:12px;gap:22px">
+    <div class="sim-box" style="width:250px"><canvas class="world" title="Hedefi değiştirmek için tıkla"></canvas></div>
+    <div class="col grow" style="gap:14px">
+      <div class="sim-box" style="height:250px"><canvas class="plot"></canvas></div>
+      <div class="bars card" style="padding:16px 18px">
+        <div class="bar" data-bar="P"><span class="p">P</span><div class="track"><div class="fill" style="background:var(--p)"></div></div><output>0</output></div>
+        <div class="bar" data-bar="I"><span class="i">I</span><div class="track"><div class="fill" style="background:var(--i)"></div></div><output>0</output></div>
+        <div class="bar" data-bar="D"><span class="d">D</span><div class="track"><div class="fill" style="background:var(--d)"></div></div><output>0</output></div>
+        <div class="bar" data-bar="U" style="margin-top:12px"><span>itme</span><div class="track" style="--x:0"><div class="fill" style="background:var(--text)"></div><div class="mark" style="left:39.2%"><span>yerçekimi</span></div></div><output>0</output></div>
+      </div>
+      <div class="caption" data-for="">Kp, Ki ve Kd sonuca nasıl etki ediyor, anlayalım.</div>
+      <div class="caption" data-for="3,0,0" hidden=""><b class="p">Sadece P:</b> hedefin altında asılı kalıp zıplıyor. Havada durmak için itme lazım ama P ancak hata varken itiyor.</div>
+      <div class="caption" data-for="3,0,2.5" hidden=""><b class="d">+ D:</b> salınım söndü. Ama hâlâ hedefin altında: yerçekimini karşılamak için hâlâ bir hata gerekiyor.</div>
+      <div class="caption" data-for="3,1.5,2.5" hidden=""><b class="i">+ I:</b> biriken hata, yerçekimini karşılayan itmeyi kendisi buldu. Hedefe oturdu.</div>
+    </div>
+    <div class="col" style="width:290px;gap:14px">
+      <div class="slider p"><label>Kp</label><input type="range" data-k="Kp" min="0" max="10" step="0.1" value="3"><output></output></div>
+      <div class="slider i"><label>Ki</label><input type="range" data-k="Ki" min="0" max="5" step="0.1" value="0"><output></output></div>
+      <div class="slider d"><label>Kd</label><input type="range" data-k="Kd" min="0" max="6" step="0.1" value="0"><output></output></div>
+      <div class="controls" style="margin-top:6px">
+        <button class="btn" data-preset="3,0,0">Sadece P</button>
+        <button class="btn" data-preset="3,0,2.5">P + D</button>
+        <button class="btn" data-preset="3,1.5,2.5">P + I + D</button>
+      </div>
+      <div class="controls">
+        <button class="btn" data-act="gust">Rüzgâr</button>
+        <button class="btn" data-act="reset">Baştan</button>
+      </div>
+      <div class="card mt-auto" style="padding:14px 18px">
+        <p style="font-size:16px">hata (hedef − yükseklik)</p>
+        <p style="font:700 30px/1.2 var(--mono);color:var(--text)" data-out="err">0 m</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Sırayla: Sadece P → P + D → P + I + D. "itme" çubuğundaki yerçekimi çizgisine dikkat çek.</p>
+    <p>Sonra seyirciye sor: "Kp'yi ne yapalım?" Gökyüzüne tıklayınca hedef değişir. Rüzgâr = ani dürtme.</p>
+    <p>Fazla I → aşma (windup). Fazla D → titreme yok ama tembel.</p>
+  </aside>
+</section>
+
+<!-- ============ 8. Yol haritası ============ -->
+<section class="slide">
+  <div class="kicker">Robota dönelim</div>
+  <h2>5 adımda ayakta durmak</h2>
+  <div class="cards" style="grid-template-columns:repeat(5,1fr);margin-top:40px">
+    <div class="card center"><div class="led" data-text="1" style="--size:90px;margin:0 auto 16px"></div><h3>Sadece P</h3><p>Deniyor</p></div>
+    <div class="card center"><div class="led" data-text="2" style="--size:90px;margin:0 auto 16px"></div><h3>+ D</h3><p>Sakinleşiyor</p></div>
+    <div class="card center"><div class="led" data-text="3" style="--size:90px;margin:0 auto 16px"></div><h3>+ I</h3><p>Birlikte ayarlıyoruz</p></div>
+    <div class="card center"><div class="led" data-text="4" style="--size:90px;margin:0 auto 16px"></div><h3>PID içinde PID</h3><p>Yerinde duruyor</p></div>
+    <div class="card center"><div class="led" data-text="5" style="--size:90px;margin:0 auto 16px"></div><h3>Kumanda</h3><p>Sürülebilir</p></div>
+  </div>
+  <p class="muted mt-auto">Her adım ayrı bir dosya: <span class="chip">checkpoints/step1_p.py</span> … <span class="chip">step5_xbox.py</span></p>
+  <aside class="notes">
+    <p>Pybricks'te 5 dosya önceden açık olsun; her adımda sadece "çalıştır".</p>
+  </aside>
+</section>
+
+<!-- ============ 9. Adım 1 ============ -->
+<section class="slide">
+  <div class="roadmap"><span class="now">1 · P</span><span>2 · +D</span><span>3 · +I</span><span>4 · PID²</span><span>5 · Kumanda</span></div>
+  <h2>Adım 1: Sadece P</h2>
+  <div class="row grow" style="margin-top:14px">
+    <div class="col" style="width:670px;gap:10px">
+<script type="text/x-python" data-start="16" data-class="small" data-new="1">
+roll_pid = PID(22, 0, 0, 100)
+</script>
+<script type="text/x-python" data-start="22" data-class="small" data-new="2,13-14,16-17">
+while True:
+    roll = hub.imu.tilt()[1]
+
+    # Safety stop if robot falls
+    if abs(upright - roll) > 45:
+        power = roll_pid.reset()
+        is_active = False
+
+    # Activate balance when upright
+    if abs(upright - roll) < 20:
+        is_active = True
+
+    if is_active:
+        power = roll_pid.compute(setpoint=upright, measurement=roll)
+
+    left.dc(-int(power))
+    right.dc(int(power))
+</script>
+    </div>
+    <div class="col grow" style="gap:12px">
+      <div class="caption">1° eğim → %22 motor gücü. Düzeltmeye çalışıyor… ama bir şeyler eksik.</div>
+      <div class="twin sim-box grow" data-mode="roll" data-gains="22,0,0"><canvas></canvas></div>
+      <div class="controls twin-controls">
+        <button class="btn" data-act="push-l">◀ dürt</button>
+        <button class="btn" data-act="push-r">dürt ▶</button>
+        <button class="btn" data-act="reset">yeniden</button>
+        <span class="badge" style="margin-left:auto">CANLI · step1_p.py</span></div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Robotta step1_p.py'yi çalıştır. Elinle dik tut, bırak.</p>
+    <p>PROVA SONRASI: altyazıyı robotun gerçekte yaptığına göre güncelle (salınıyor mu? kaçıyor mu?).</p>
+    <p>Sol motor ters takılı, o yüzden -power.</p>
+  </aside>
+</section>
+
+<!-- ============ 10. Adım 2 ============ -->
+<section class="slide">
+  <div class="roadmap"><span class="done">1 · P</span><span class="now">2 · +D</span><span>3 · +I</span><span>4 · PID²</span><span>5 · Kumanda</span></div>
+  <h2>Adım 2: + D</h2>
+  <div class="row grow" style="margin-top:14px">
+    <div class="col" style="width:670px;gap:16px">
+      <p class="muted" style="font-size:22px">Tek satır değişti:</p>
+<script type="text/x-python" data-start="16" data-class="small" data-dim="1" data-new="2">
+roll_pid = PID(22, 0, 0, 100)
+roll_pid = PID(22, 0, 0.22, 100)
+</script>
+      <p class="muted" style="font-size:22px;margin-top:10px">D'nin yaptığı (PID.py):</p>
+<script type="text/x-python" data-start="38" data-class="small" data-new="4">
+        # Derivative
+        D = 0
+        if dt > 0:
+            D = self.Kd * (error - self.last_error) / dt
+</script>
+      <p style="font-size:22px">Hızla eğiliyorsa erken ve sert, yavaşsa yumuşak tepki.</p>
+    </div>
+    <div class="col grow" style="gap:12px">
+      <div class="caption">Daha sakin… ama yavaş yavaş kayıp gidiyor.</div>
+      <div class="twin sim-box grow" data-mode="roll" data-gains="22,0,0.22"><canvas></canvas></div>
+      <div class="controls twin-controls">
+        <button class="btn" data-act="push-l">◀ dürt</button>
+        <button class="btn" data-act="push-r">dürt ▶</button>
+        <button class="btn" data-act="reset">yeniden</button>
+        <span class="badge" style="margin-left:auto">CANLI · step2_pd.py</span></div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>step2_pd.py. Simülasyonda (modelde) D'nin etkisi küçük; asıl fark robotta görünmeli.</p>
+    <p>PROVA SONRASI: altyazıyı güncelle.</p>
+  </aside>
+</section>
+
+<!-- ============ 11. Adım 3 ============ -->
+<section class="slide">
+  <div class="roadmap"><span class="done">1 · P</span><span class="done">2 · +D</span><span class="now">3 · +I</span><span>4 · PID²</span><span>5 · Kumanda</span></div>
+  <h2>Adım 3: + I, birlikte ayarlayalım</h2>
+  <div class="row grow" style="margin-top:14px">
+    <div class="col" style="width:470px;gap:18px">
+      <div data-pad="dpad,y:amber,a:amber,rb,lb" style="width:400px"></div>
+      <ul class="legend">
+        <li><b>↑ / ↓</b><span><span class="p">Kp</span> ± 2</span></li>
+        <li><b>Y / A</b><span><span class="d">Kd</span> ± 0.02</span></li>
+        <li><b>RB / LB</b><span><span class="i">Ki</span> ± 20</span></li>
+      </ul>
+    </div>
+    <div class="col grow" style="gap:14px">
+      <div class="card frag"><h3>1. <span class="p">Kp</span>'yi titreyene kadar artır</h3></div>
+      <div class="card frag"><h3>2. <span class="d">Kd</span>'yi sakinleşene kadar artır</h3></div>
+      <div class="card frag"><h3>3. <span class="i">Ki</span> ile kaymayı/eğikliği yok et</h3></div>
+      <div class="card frag" style="display:flex;justify-content:space-between;align-items:center">
+        <p>Benim bulduğum:</p>
+        <span class="chip"><span class="p">Kp 22</span> · <span class="i">Ki 140</span> · <span class="d">Kd 0.22</span></span>
+      </div>
+      <div class="controls mt-auto"><span class="badge" style="margin-left:auto">CANLI · step3_pid_tuning.py</span></div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Kumandayı bir gönüllüye ver. Hub ekranı değiştirilen değeri gösteriyor (Kp, Kd×100, Ki/10); tam değerler Pybricks konsolunda.</p>
+    <p>"Ben de böyle ayarladım: her değişiklik için kodu yeniden yüklemek yerine düğmeler. İterasyon hızı her şey."</p>
+    <p>Dikkat: display.text() kayan yazı döngüyü bloklar. Bu yüzden display.number().</p>
+  </aside>
+</section>
+
+<!-- ============ 13. Hâlâ kayıyor ============ -->
+<section class="slide">
+  <div class="roadmap"><span class="done">1 · P</span><span class="done">2 · +D</span><span class="now">3 · +I</span><span>4 · PID²</span><span>5 · Kumanda</span></div>
+  <h2>Dik duruyor… ama yürüyüp gidiyor</h2>
+  <div class="row grow" style="margin-top:14px">
+    <div class="col" style="width:440px">
+      <p>Bir robota imkansız bir görev verin, sonra onu izleyin</p>
+      <p class="frag">IMU'nun "90°"si gerçek denge noktası değil.</p>
+      <p class="frag">Yanlış olan açıyı tutmak, hızlanıyor… motor %100'e dayanınca düşüyor.<br><br>veya<br><br>Aşırı düzeltme yaparak sallantılı bir şekilde dengeyi bulmaya çalışıyor.</p>
+    </div>
+    <div class="col grow" style="gap:12px">
+      <div class="twin sim-box grow" data-mode="roll" data-gains="22,140,0.22"><canvas></canvas></div>
+      <div class="controls twin-controls">
+        <button class="btn" data-act="push-l">◀ dürt</button>
+        <button class="btn" data-act="push-r">dürt ▶</button>
+        <button class="btn" data-act="reset">yeniden</button>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Simülasyonda başlangıç bayrağına ve "konum"a dikkat çek. Robotta da aynı: masanın kenarına doğru gidiyor (yakala!).</p>
+  </aside>
+</section>
+
+<!-- ============ 14. PID içinde PID ============ -->
+<section class="slide">
+  <div class="roadmap"><span class="done">1 · P</span><span class="done">2 · +D</span><span class="done">3 · +I</span><span class="now">4 · PID²</span><span>5 · Kumanda</span></div>
+  <h2>Adım 4: PID içinde PID</h2>
+  <svg viewBox="0 0 1136 400" style="margin-top:8px">
+    <defs>
+      <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="#8d9ca6"></path>
+      </marker>
+    </defs>
+    <g fill="none" stroke-width="3" marker-end="url(#arr2)">
+      <path class="flow" stroke="#8d9ca6" d="M170 150 H207"></path>
+      <path class="flow" stroke="#8d9ca6" d="M263 150 H300"></path>
+      <path class="flow" stroke="#8d9ca6" d="M460 150 H542"></path>
+      <path class="flow" stroke="#8d9ca6" d="M598 150 H630"></path>
+      <path class="flow" stroke="#8d9ca6" d="M790 150 H822"></path>
+      <path class="flow" stroke="#8d9ca6" d="M962 150 H984"></path>
+      <path class="flow" stroke="#1fb5b0" d="M1054 185 V260 H570 V182"></path>
+      <path class="flow slow" stroke="#ffbf47" d="M1084 185 V340 H235 V182"></path>
+    </g>
+    <g font-size="21" text-anchor="middle" fill="#e9eef1">
+      <rect x="10" y="115" width="160" height="70" rx="12" fill="#151b1f" stroke="#2a353d" stroke-width="2"></rect>
+      <text x="90" y="146">Hedef hız</text><text x="90" y="171" font-size="16" fill="#8d9ca6">0 ya da joystick</text>
+
+      <circle cx="235" cy="150" r="27" fill="#151b1f" stroke="#ffbf47" stroke-width="3"></circle><text x="235" y="158" font-size="26">−</text>
+
+      <rect x="302" y="115" width="158" height="70" rx="12" fill="#151b1f" stroke="#ffbf47" stroke-width="3"></rect>
+      <text x="381" y="146">Hız PID</text><text x="381" y="171" font-size="16" fill="#8d9ca6">speed_pid</text>
+
+      <circle cx="570" cy="150" r="27" fill="#151b1f" stroke="#1fb5b0" stroke-width="3"></circle><text x="570" y="158" font-size="26">−</text>
+
+      <rect x="632" y="115" width="158" height="70" rx="12" fill="#151b1f" stroke="#1fb5b0" stroke-width="3"></rect>
+      <text x="711" y="146">Eğim PID</text><text x="711" y="171" font-size="16" fill="#8d9ca6">roll_pid</text>
+
+      <rect x="824" y="115" width="138" height="70" rx="12" fill="#151b1f" stroke="#2a353d" stroke-width="2"></rect>
+      <text x="893" y="157">Motorlar</text>
+
+      <rect x="986" y="115" width="140" height="70" rx="12" fill="#151b1f" stroke="#2a353d" stroke-width="2"></rect>
+      <text x="1056" y="157">Robot</text>
+
+      <g font-size="17">
+        <text x="501" y="128" fill="#ffbf47" font-size="15">hedef eğim</text>
+        <text x="820" y="252" fill="#1fb5b0">eğim (IMU) · her tur, ~100 Hz</text>
+        <text x="660" y="332" fill="#ffbf47">tekerlek hızı · her 5 turda bir, ~20 Hz</text>
+      </g>
+    </g>
+  </svg>
+  <p class="lead frag" style="text-align:center;margin-top:auto">Durmak için önce <em class="hl">geriye yaslanmak</em> gerekiyor.<br><span class="muted" style="font-size:24px">Geriye yaslanmak için de önce biraz daha hızlanmak.</span></p>
+  <aside class="notes">
+    <p>Dış döngü motora dokunmuyor bile; sadece iç döngünün hedefini (eğimi) değiştiriyor.</p>
+    <p>Bisiklet benzetmesi: frenlemeden önce kilonu geriye verirsin.</p>
+  </aside>
+</section>
+
+<!-- ============ 15. Adım 4: kod ============ -->
+<section class="slide">
+  <div class="roadmap"><span class="done">1 · P</span><span class="done">2 · +D</span><span class="done">3 · +I</span><span class="now">4 · PID²</span><span>5 · Kumanda</span></div>
+  <h2>Adım 4: kod</h2>
+  <div class="row grow" style="margin-top:14px">
+    <div class="col" style="width:640px;gap:10px">
+<script type="text/x-python" data-start="31" data-class="small" data-new="2">
+roll_pid = PID(22, 140, 0.22, 100)
+speed_pid = PID(0.006, 0.0014, 0.000005, 30)
+</script>
+<script type="text/x-python" data-start="54" data-class="small" data-new="2,7-10">
+    if is_active:
+        power = roll_pid.compute(setpoint=target_roll, measurement=roll)
+
+    # Update speed PID every few cycles
+    counter = (counter + 1) % 10000
+
+    if counter % 5 == 0:
+        speed = (-left.speed() + right.speed())/2
+        raw_target_roll = upright - speed_pid.compute(setpoint=target_speed, measurement=speed)
+        target_roll = clamp(raw_target_roll, 60, 120)
+</script>
+      <p style="font-size:21px" class="muted">Hedef eğim 60°–120° arasında sınırlı: dış döngü ne kadar telaşlansa da robotu yere yatıramaz.</p>
+    </div>
+    <div class="col grow" style="gap:12px">
+      <div class="twin sim-box grow" data-mode="cascade"><canvas></canvas></div>
+      <div class="controls twin-controls">
+        <button class="btn" data-act="push-l">◀ dürt</button>
+        <button class="btn" data-act="push-r">dürt ▶</button>
+        <button class="btn" data-act="reset">yeniden</button>
+        <button class="btn" data-set-mode="roll">Dış döngü kapalı</button>
+        <button class="btn on" data-set-mode="cascade">Dış döngü açık</button>
+      </div>
+      <div class="controls"><span class="badge" style="margin-left:auto">CANLI · step4_cascade.py</span></div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>step4_cascade.py. Robotu it: geri gelip aynı yerde durmaya çalışıyor.</p>
+    <p>Simülasyonda dış döngüyü kapat/aç ve konuma bak.</p>
+  </aside>
+</section>
+
+<!-- ============ 16. Adım 5 ============ -->
+<section class="slide">
+  <div class="roadmap"><span class="done">1 · P</span><span class="done">2 · +D</span><span class="done">3 · +I</span><span class="done">4 · PID²</span><span class="now">5 · Kumanda</span></div>
+  <h2>Adım 5: Kumandayla sürüş</h2>
+  <div class="row grow" style="margin-top:14px">
+    <div class="col" style="width:640px;gap:14px">
+<script type="text/x-python" data-start="64" data-class="small" data-new="2-3,7">
+    if counter % 10 == 0:
+        target_speed = - controller.joystick_right()[1] * 6
+        target_turn = controller.joystick_left()[0] / 2
+        (left_trigger, right_trigger) = controller.triggers()
+
+        if left_trigger > 10:
+            hub.speaker.beep(left_trigger*6, -1)
+        else:
+            hub.speaker.beep(0,0)
+</script>
+<script type="text/x-python" data-start="76" data-class="small" data-new="1-2">
+    left.dc(-int(power)-target_turn)
+    right.dc(int(power)-target_turn)
+</script>
+    </div>
+    <div class="col grow" style="gap:16px">
+      <div data-pad="ls:amber,rs,lt:amber" style="width:320px"></div>
+      <ul class="legend">
+        <li><b>Sağ çubuk</b><span>hedef hız → dış döngü</span></li>
+        <li><b>Sol çubuk</b><span>dönüş: tekerleklere ± fark</span></li>
+        <li><b>LT</b><span>bip, perde tetiğe göre</span></li>
+      </ul>
+      <p class="frag" style="font-size:23px">Joystick motoru sürmüyor. <em class="hl">Hedefi</em> değiştiriyor; gerisini döngüler hallediyor.</p>
+      <div class="controls mt-auto"><span class="badge" style="margin-left:auto">CANLI · selfbalancing_final.py</span></div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>selfbalancing_final.py. Robotu sür: ileri, geri, dön. Bip!</p>
+    <p>İleri gitmek için önce geriye kaçıp sonra öne eğildiğini göster (dış döngü işte).</p>
+  </aside>
+</section>
+
+<!-- ============ 20. Sıra sizde ============ -->
+<section class="slide">
+  <div class="row grow">
+    <div class="col grow" style="justify-content:center">
+      <div class="kicker">Sıra sizde</div>
+      <h1>Sorular?</h1>
+      <p class="lead" style="margin-top:20px">…ve kim sürmek ister?</p>
+      <ul class="legend" style="margin-top:30px">
+        <li><b>Sağ çubuk</b><span>ileri / geri</span></li>
+        <li><b>Sol çubuk</b><span>dön</span></li>
+        <li><b>LT</b><span>bip</span></li>
+      </ul>
+    </div>
+    <div class="col" style="justify-content:center;width:460px">
+      <div data-pad="ls,rs,lt:amber"></div>
+    </div>
+  </div>
+  <aside class="notes">
+    <p>Kumandayı dolaştır. Masanın kenarına dikkat!</p>
+  </aside>
+</section>
+
+</div></div>
+
+<div id="progress"></div>
+<div id="counter"></div>
+<div id="notes" hidden="">
+  <header><span class="where"></span><span>N: kapat · T: süreyi sıfırla · F: tam ekran</span><span class="timer">00:00</span></header>
+  <div class="body"></div>
+</div>
+
+<!-- Labels drawn inside the simulations -->
+<div id="sim-text" hidden="">
+  <div class="sim-text-title">Simülasyon etiketleri</div>
+  <label>Robot grafiği <span data-key="chart">eğim, son 6 sn (±15°)</span></label>
+  <label>Eğim <span data-key="lean">eğim</span></label>
+  <label>Güç <span data-key="power">güç</span></label>
+  <label>Konum <span data-key="position">konum</span></label>
+  <label>Düştü <span data-key="fell">DÜŞTÜ</span></label>
+  <label>Bloklandı <span data-key="blocked">DÖNGÜ BLOKLANDI</span></label>
+  <label>Drone hedef <span data-key="target">hedef</span></label>
+  <label>Drone zaman <span data-key="time">zaman →</span></label>
+</div>
+
+<script src="deck.js"></script>
+<script src="sims.js"></script>
+<script src="editor.js"></script>
+<script>Deck.init();</script>
+
+
+</body></html>
